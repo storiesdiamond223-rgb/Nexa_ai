@@ -1,0 +1,8 @@
+{
+  "appId": "com.chatnexus.nexa",
+  "appName": "Nexa",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
