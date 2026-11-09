@@ -86,11 +86,11 @@ body{background:#0a0a1a;color:white;display:flex;flex-direction:column;overflow:
 // Get a key at https://console.groq.com -> API Keys (starts with gsk_)
 // NOTE: a key in front-end code is visible to anyone. Fine for testing;
 // for a public launch, move this call to a backend/proxy.
-const GROQ_API_KEY = "PASTE_YOUR_GROQ_API_KEY_HERE";
+const GROQ_API_KEY = "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";
 // ===========================================
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_MODEL = "openai/gpt-oss-20b";
 
 // Speech codes for voice input/output
 const LANG_CODES = {Yoruba:"yo-NG",Igbo:"ig-NG",Hausa:"ha-NG",Pidgin:"en-NG",English:"en-US",
@@ -209,11 +209,11 @@ function parseName(text){
 const IMAGE_TRIGGER = /\b(draw|generate (an? )?image|(a )?(picture|image) of)\b/i;
 const IMAGE_STRIP = /\b(draw|generate (an? )?image( of)?|(a )?(picture|image) of|for me|please)\b/gi;
 
-// Chat history sent to the model, rebuilt from the saved log (text only, last 10)
+// Chat history sent to the model, rebuilt from the saved log (text only, last 6)
 function apiHistory(){
   return log.filter(m => !m.img && m.text)
     .map(m => ({role: m.who === "user" ? "user" : "assistant", content: m.text}))
-    .slice(-10);
+    .slice(-6);
 }
 
 async function askGroq(){
@@ -228,12 +228,13 @@ async function askGroq(){
 
   const res = await fetch(GROQ_URL, {
     method: "POST",
-    headers: {"Content-Type":"application/json", "Authorization":"Bearer " + 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},
+    headers: {"Content-Type":"application/json", "Authorization":"Bearer " + GROQ_API_KEY},
     body: JSON.stringify({
       model: GROQ_MODEL,
       messages: [{role:"system", content:system}, ...apiHistory()],
       temperature: 0.7,
-      max_tokens: 800
+      max_tokens: 900,
+      reasoning_effort: "medium"
     })
   });
   if(!res.ok){
