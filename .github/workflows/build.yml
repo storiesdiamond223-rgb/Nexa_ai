@@ -68,7 +68,11 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          # Gradle download timed out at 10s, so allow 2 minutes
+          sed -i 's/networkTimeout=.*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties
+          cat gradle/wrapper/gradle-wrapper.properties
+          # Try up to 3 times in case the network is slow
+          ./gradlew assembleDebug --stacktrace || ./gradlew assembleDebug --stacktrace || ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK - Artifacts
         uses: actions/upload-artifact@v4
