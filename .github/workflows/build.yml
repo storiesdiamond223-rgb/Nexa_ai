@@ -71,8 +71,20 @@ jobs:
           # Gradle download timed out at 10s, so allow 2 minutes
           sed -i 's/networkTimeout=.*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties
           cat gradle/wrapper/gradle-wrapper.properties
-          # Try up to 3 times in case the network is slow
-          ./gradlew assembleDebug --stacktrace || ./gradlew assembleDebug --stacktrace || ./gradlew assembleDebug --stacktrace
+          # GitHub returned 504 for the Gradle download, so try the official
+          # link first, then a backup mirror, and retry each one
+          for URL in \
+            "https://services.gradle.org/distributions/gradle-8.14.3-all.zip" \
+            "https://mirrors.cloud.tencent.com/gradle/gradle-8.14.3-all.zip" \
+            "https://services.gradle.org/distributions/gradle-8.14.3-all.zip"
+          do
+            sed -i "s|^distributionUrl=.*|distributionUrl=${URL}|" gradle/wrapper/gradle-wrapper.properties
+            echo "Trying Gradle from: ${URL}"
+            ./gradlew assembleDebug --stacktrace && exit 0
+            echo "That source failed, waiting before the next try"
+            sleep 20
+          done
+          exit 1
 
       - name: Upload APK - Artifacts
         uses: actions/upload-artifact@v4
