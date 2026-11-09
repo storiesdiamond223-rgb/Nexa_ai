@@ -1,0 +1,80 @@
+name: Build Nexa APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      # Capacitor 7+ needs Java 21 (Java 17 causes "invalid source release: 21")
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
+      - name: Install Android platform and build tools
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Prepare Web Files
+        run: |
+          ls -la
+          mkdir -p www
+          cp index.html www/
+          cp manifest.json www/ || echo "no manifest"
+          cp icon.png www/ || echo "no icon"
+          ls -la www/
+
+      # Capacitor needs a package.json and a config file, or "cap add" fails
+      - name: Install Capacitor
+        run: |
+          [ -f package.json ] || npm init -y
+          npm install @capacitor/cli @capacitor/core @capacitor/android
+
+      - name: Create Capacitor config
+        run: |
+          if [ ! -f capacitor.config.json ] && [ ! -f capacitor.config.ts ]; then
+            cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "com.nexa.app",
+            "appName": "Nexa",
+            "webDir": "www"
+          }
+          EOF
+          fi
+          cat capacitor.config.*
+
+      - name: Add Android Project
+        run: |
+          [ -d android ] || npx cap add android
+          npx cap sync android
+          ls -la android/
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK - Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nexa-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
