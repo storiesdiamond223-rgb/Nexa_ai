@@ -1,0 +1,58 @@
+name: Build Nexa APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare Web Files
+        run: |
+          ls -la
+          mkdir -p www
+          cp index.html www/
+          cp manifest.json www/ || echo "no manifest"
+          cp icon.png www/ || echo "no icon"
+          ls -la www/
+
+      - name: Install Capacitor
+        run: |
+          npm install @capacitor/cli @capacitor/core @capacitor/android
+
+      - name: Add Android Project
+        run: |
+          npx cap add android
+          npx cap sync android
+          ls -la android/
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK - Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nexa-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
