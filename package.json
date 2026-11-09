@@ -1,0 +1,11 @@
+{
+  "name": "nexa",
+  "version": "1.0.0",
+  "description": "Nexa - Personal AI by Mr Wayne",
+  "scripts": { "build": "echo Nexa build done" },
+  "devDependencies": {
+    "@capacitor/cli": "latest",
+    "@capacitor/core": "latest",
+    "@capacitor/android": "latest"
+  }
+}
